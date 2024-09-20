@@ -15,6 +15,7 @@ import InitialLoginScreen from '../screens/InitialLoginScreen';
 import StudentHomeScreen from '../screens/StudentHomeScreen';
 import addScreen from '../app/Add'
 import retrieveUserData from './retrieveUserData ';
+import StudentDetails from '../screens/Components/StudentDetails'
 
 const Stack = createNativeStackNavigator();
 
@@ -95,6 +96,7 @@ export default function Main() {
             <Stack.Screen name="index" component={LoginScreen} options={{ headerShown: false }} />
             <Stack.Screen name="registration" component={RegisterScreen} options={{ headerShown: false }} />
             {/* <Stack.Screen name="PostScreen" component={AdminPostScreen} /> */}
+            <Stack.Screen name="StudentDetails" component={StudentDetails} options={{ headerShown: false }} />
             <Stack.Screen name='Add'
                 component={addScreen} />
             <Stack.Screen

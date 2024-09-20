@@ -36,7 +36,7 @@ const AnnouncementList = () => {
       const names = await AsyncStorage.getItem('name');
       setGoogleId(savedGoogleId);
       setName(names);
-      console.log('Extracted name:', names);
+      console.log('Extracted name:', firstname);
 
       if (userId && firstname) {
         setUserData({ userId, firstname });
@@ -52,7 +52,7 @@ const AnnouncementList = () => {
 
       setUserData(response.data);
     } catch (err) {
-      console.error('Error fetching user data:', err);
+      console.error('Error fetching user datass:', err);
       setError('Failed to load user data');
     } finally {
       setLoadingUserData(false);

@@ -1,41 +1,74 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { studentData } from './studentData'; // Importing the student data
+import axios from 'axios';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
 
 const StudentListDisplay = ({ level, department, strand, gradeLevel, section }) => {
-  let students = [];
-  console.log('Data Path:', studentData[level]?.[department]?.[gradeLevel]?.[section]);
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
-  // Log the props to ensure they are being passed correctly
-  console.log('Props:', { level, department, strand, gradeLevel, section });
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const token = await AsyncStorage.getItem('accessToken');
+      try {
+        setLoading(true);
+        const response = await axios.get('http://192.168.1.8:3000/medical/get', {
+          params: {
+            educationLevel: level,
+            yearlvl: gradeLevel,
+            strand: strand || undefined,
+            course: department || '',
+            section,
+          },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(response.data);
+        setStudents(response.data);
+      } catch (err) {
+        console.error('Error fetching students:', err);
+        setError('Failed to load students');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Determine which student group to show based on the selected level
-  if (level === 'JHS') {
-    students = studentData.JHS[gradeLevel]?.[section] || [];
-  } else if (level === 'SHS') {
-    students = studentData.SHS[strand]?.[gradeLevel]?.[section] || [];
-  } else if (level === 'College') {
-    students = studentData.College[department]?.[gradeLevel]?.[section] || [];
+    fetchStudents();
+  }, [level, department, strand, gradeLevel, section]);
+
+  const handlePress = (userId) => {
+    navigation.navigate('StudentDetails', { userId });
+  };
+
+  if (loading) {
+    return <Text style={styles.loadingText}>Loading...</Text>;
   }
 
-  console.log('Students:', students); // Log the retrieved students
+  if (error) {
+    return <Text style={styles.errorText}>{error}</Text>;
+  }
 
   return (
     <View style={styles.container}>
       {students.length > 0 ? (
         <FlatList
           data={students}
-          keyExtractor={(item) => item.telNum} // Ensure this is unique
+          keyExtractor={(item) => item.personal.userId}
           renderItem={({ item }) => (
-            <View style={styles.studentContainer}>
-              <Text style={styles.studentName}>{item.name}</Text>
-              <Text>Age: {item.age}</Text>
-              <Text>Section: {item.section}</Text>
-              <Text>Guardian: {item.guardian}</Text>
-              <Text>Medical Info:</Text>
-              <Text>Respiratory: {item.respiratory}</Text>
-              {/* Display other medical info */}
-            </View>
+            <TouchableOpacity onPress={() => handlePress(item.personal.userId)}>
+              <View style={styles.studentCard}>
+                <Text style={styles.studentName}>
+                  {item.personal.firstName} {item.personal.lastName}
+                </Text>
+                <Text style={styles.studentYear}>Year Level: {item.yearlvl}</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
       ) : (
@@ -47,24 +80,50 @@ const StudentListDisplay = ({ level, department, strand, gradeLevel, section }) 
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
+    backgroundColor: '#f4f4f4',
   },
-  studentContainer: {
-    marginBottom: 15,
-    padding: 15,
-    borderRadius: 5,
-    backgroundColor: '#f2f2f2',
+  studentCard: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 25,
+    marginVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
   studentName: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  studentYear: {
+    fontSize: 16,
+    fontWeight: '400',
+    color: '#666',
   },
   noStudentsText: {
-    fontSize: 16,
-    color: '#ff0000',
+    fontSize: 18,
+    color: '#ff5252',
     textAlign: 'center',
     marginTop: 20,
-  }
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#007AFF',
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#ff5252',
+    textAlign: 'center',
+    marginTop: 20,
+  },
 });
 
 export default StudentListDisplay;
